@@ -71,10 +71,15 @@ format(new Date(2015, 2, 10, 5, 30, 20), 'shortTime'); // '05:30'
 
 // Literals
 format(new Date(2001, 2, 5, 6, 7, 2, 5), '[on] MM-DD-YYYY [at] HH:mm'); // 'on 03-05-2001 at 06:07'
+
+// Format in UTC
+// Ensure the format string begins with "UTC:"
+format(new Date(1998, 5, 3, 15, 23, 10, 350), 'UTC:YYYY-MM-DD hh:mm:ss.SSS A'); // '1998-06-03 08:23:10.350 PM'
+format(new Date(2015, 10, 20, 3, 2, 1), 'UTC:isoDateTime'); // '2015-11-20T08:02:01+00:00'
 ```
 
 #### Parsing
-`parse` accepts a Date string and a string format and returns a Date object. See below for available format tokens. 
+`parse` accepts a Date string and a string format and returns a Date object. See below for available format tokens.
 
 *NOTE*: `parse` will throw an error when passed invalid string format or missing format. You MUST specify a format.
 ```js
