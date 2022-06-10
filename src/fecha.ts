@@ -5,6 +5,7 @@ const threeDigits = "\\d{3}";
 const fourDigits = "\\d{4}";
 const word = "[^\\s]+";
 const literal = /\[([^]*?)\]/gm;
+const utcMarker = "UTC:";
 
 type DateInfo = {
   year: number;
@@ -115,9 +116,9 @@ const defaultI18n: I18nSettings = {
     return (
       dayOfMonth +
       ["th", "st", "nd", "rd"][
-        dayOfMonth % 10 > 3
-          ? 0
-          : ((dayOfMonth - (dayOfMonth % 10) !== 10 ? 1 : 0) * dayOfMonth) % 10
+      dayOfMonth % 10 > 3
+        ? 0
+        : ((dayOfMonth - (dayOfMonth % 10) !== 10 ? 1 : 0) * dayOfMonth) % 10
       ]
     );
   }
@@ -137,57 +138,76 @@ const pad = (val: string | number, len = 2): string => {
   return val;
 };
 
+const getDate = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCDate() : dateObj.getDate();
+const getDay = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCDay() : dateObj.getDay();
+const getMonth = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCMonth() : dateObj.getMonth();
+const getFullYear = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCFullYear() : dateObj.getFullYear();
+const getHours = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCHours() : dateObj.getHours();
+const getMinutes = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCMinutes() : dateObj.getMinutes();
+const getSeconds = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCSeconds() : dateObj.getSeconds();
+const getMilliseconds = (dateObj: Date, utc: boolean): number =>
+  utc ? dateObj.getUTCMilliseconds() : dateObj.getMilliseconds();
+const getTimezoneOffset = (dateObj: Date, utc: boolean): number =>
+  utc ? 0 : dateObj.getTimezoneOffset();
+
 const formatFlags: Record<
   string,
-  (dateObj: Date, i18n: I18nSettings) => string
+  (dateObj: Date, utc: boolean, i18n: I18nSettings) => string
 > = {
-  D: (dateObj: Date): string => String(dateObj.getDate()),
-  DD: (dateObj: Date): string => pad(dateObj.getDate()),
-  Do: (dateObj: Date, i18n: I18nSettings): string =>
-    i18n.DoFn(dateObj.getDate()),
-  d: (dateObj: Date): string => String(dateObj.getDay()),
-  dd: (dateObj: Date): string => pad(dateObj.getDay()),
-  ddd: (dateObj: Date, i18n: I18nSettings): string =>
-    i18n.dayNamesShort[dateObj.getDay()],
-  dddd: (dateObj: Date, i18n: I18nSettings): string =>
-    i18n.dayNames[dateObj.getDay()],
-  M: (dateObj: Date): string => String(dateObj.getMonth() + 1),
-  MM: (dateObj: Date): string => pad(dateObj.getMonth() + 1),
-  MMM: (dateObj: Date, i18n: I18nSettings): string =>
-    i18n.monthNamesShort[dateObj.getMonth()],
-  MMMM: (dateObj: Date, i18n: I18nSettings): string =>
-    i18n.monthNames[dateObj.getMonth()],
-  YY: (dateObj: Date): string =>
-    pad(String(dateObj.getFullYear()), 4).substr(2),
-  YYYY: (dateObj: Date): string => pad(dateObj.getFullYear(), 4),
-  h: (dateObj: Date): string => String(dateObj.getHours() % 12 || 12),
-  hh: (dateObj: Date): string => pad(dateObj.getHours() % 12 || 12),
-  H: (dateObj: Date): string => String(dateObj.getHours()),
-  HH: (dateObj: Date): string => pad(dateObj.getHours()),
-  m: (dateObj: Date): string => String(dateObj.getMinutes()),
-  mm: (dateObj: Date): string => pad(dateObj.getMinutes()),
-  s: (dateObj: Date): string => String(dateObj.getSeconds()),
-  ss: (dateObj: Date): string => pad(dateObj.getSeconds()),
-  S: (dateObj: Date): string =>
-    String(Math.round(dateObj.getMilliseconds() / 100)),
-  SS: (dateObj: Date): string =>
-    pad(Math.round(dateObj.getMilliseconds() / 10), 2),
-  SSS: (dateObj: Date): string => pad(dateObj.getMilliseconds(), 3),
-  a: (dateObj: Date, i18n: I18nSettings): string =>
-    dateObj.getHours() < 12 ? i18n.amPm[0] : i18n.amPm[1],
-  A: (dateObj: Date, i18n: I18nSettings): string =>
-    dateObj.getHours() < 12
+  D: (dateObj: Date, utc: boolean): string => String(getDate(dateObj, utc)),
+  DD: (dateObj: Date, utc: boolean): string => pad(getDate(dateObj, utc)),
+  Do: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    i18n.DoFn(getDate(dateObj, utc)),
+  d: (dateObj: Date, utc: boolean): string => String(getDay(dateObj, utc)),
+  dd: (dateObj: Date, utc: boolean): string => pad(getDay(dateObj, utc)),
+  ddd: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    i18n.dayNamesShort[getDay(dateObj, utc)],
+  dddd: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    i18n.dayNames[getDay(dateObj, utc)],
+  M: (dateObj: Date, utc: boolean): string => String(getMonth(dateObj, utc) + 1),
+  MM: (dateObj: Date, utc: boolean): string => pad(getMonth(dateObj, utc) + 1),
+  MMM: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    i18n.monthNamesShort[getMonth(dateObj, utc)],
+  MMMM: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    i18n.monthNames[getMonth(dateObj, utc)],
+  YY: (dateObj: Date, utc: boolean): string =>
+    pad(String(getFullYear(dateObj, utc)), 4).substr(2),
+  YYYY: (dateObj: Date, utc: boolean): string => pad(getFullYear(dateObj, utc), 4),
+  h: (dateObj: Date, utc: boolean): string => String(getHours(dateObj, utc) % 12 || 12),
+  hh: (dateObj: Date, utc: boolean): string => pad(getHours(dateObj, utc) % 12 || 12),
+  H: (dateObj: Date, utc: boolean): string => String(getHours(dateObj, utc)),
+  HH: (dateObj: Date, utc: boolean): string => pad(getHours(dateObj, utc)),
+  m: (dateObj: Date, utc: boolean): string => String(getMinutes(dateObj, utc)),
+  mm: (dateObj: Date, utc: boolean): string => pad(getMinutes(dateObj, utc)),
+  s: (dateObj: Date, utc: boolean): string => String(getSeconds(dateObj, utc)),
+  ss: (dateObj: Date, utc: boolean): string => pad(getSeconds(dateObj, utc)),
+  S: (dateObj: Date, utc: boolean): string =>
+    String(Math.round(getMilliseconds(dateObj, utc) / 100)),
+  SS: (dateObj: Date, utc: boolean): string =>
+    pad(Math.round(getMilliseconds(dateObj, utc) / 10), 2),
+  SSS: (dateObj: Date, utc: boolean): string => pad(getMilliseconds(dateObj, utc), 3),
+  a: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    getHours(dateObj, utc) < 12 ? i18n.amPm[0] : i18n.amPm[1],
+  A: (dateObj: Date, utc: boolean, i18n: I18nSettings): string =>
+    getHours(dateObj, utc) < 12
       ? i18n.amPm[0].toUpperCase()
       : i18n.amPm[1].toUpperCase(),
-  ZZ(dateObj: Date): string {
-    const offset = dateObj.getTimezoneOffset();
+  ZZ(dateObj: Date, utc: boolean): string {
+    const offset = getTimezoneOffset(dateObj, utc);
     return (
       (offset > 0 ? "-" : "+") +
       pad(Math.floor(Math.abs(offset) / 60) * 100 + (Math.abs(offset) % 60), 4)
     );
   },
-  Z(dateObj: Date): string {
-    const offset = dateObj.getTimezoneOffset();
+  Z(dateObj: Date, utc: boolean): string {
+    const offset = getTimezoneOffset(dateObj, utc);
     return (
       (offset > 0 ? "-" : "+") +
       pad(Math.floor(Math.abs(offset) / 60), 2) +
@@ -312,12 +332,18 @@ const format = (
     throw new Error("Invalid Date pass to format");
   }
 
+  const formatToUtc: boolean = mask.indexOf(utcMarker) === 0;
+
+  if (formatToUtc) {
+    mask = mask.substring(utcMarker.length);
+  }
+
   mask = globalMasks[mask] || mask;
 
   const literals: string[] = [];
 
   // Make literals inactive by replacing them with @@@
-  mask = mask.replace(literal, function($0, $1) {
+  mask = mask.replace(literal, function ($0, $1) {
     literals.push($1);
     return "@@@";
   });
@@ -328,7 +354,7 @@ const format = (
   );
   // Apply formatting rules
   mask = mask.replace(token, $0 =>
-    formatFlags[$0](dateObj, combinedI18nSettings)
+    formatFlags[$0](dateObj, formatToUtc, combinedI18nSettings)
   );
   // Inline literal values back into the formatted value
   return mask.replace(/@@@/g, () => literals.shift());
@@ -464,12 +490,12 @@ function parse(
       "month" | "day" | "hour" | "minute" | "second",
       "getMonth" | "getDate" | "getHours" | "getMinutes" | "getSeconds"
     ][] = [
-      ["month", "getMonth"],
-      ["day", "getDate"],
-      ["hour", "getHours"],
-      ["minute", "getMinutes"],
-      ["second", "getSeconds"]
-    ];
+        ["month", "getMonth"],
+        ["day", "getDate"],
+        ["hour", "getHours"],
+        ["minute", "getMinutes"],
+        ["second", "getSeconds"]
+      ];
     for (let i = 0, len = validateFields.length; i < len; i++) {
       // Check to make sure the date field is within the allowed range. Javascript dates allows values
       // outside the allowed range. If the values don't match the value was invalid
